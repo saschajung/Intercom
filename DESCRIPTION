@@ -1,0 +1,28 @@
+Package: InterCom
+Title: Reconstruction of Functional Cell-Cell Communication Networks
+Version: 0.1
+Authors@R: 
+    person(given = "Sascha",
+           family = "Jung",
+           role = c("aut", "cre"),
+           email = "sjung@cicbiogune.es")
+Description: Reconstruction of Functional Cell-Cell Communication Networks.
+License: CC-BY
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Imports: 
+    utils (>= 4.0.3),
+    base (>= 4.0.3),
+    dplyr (>= 1.0.4),
+    rlist (>= 0.4.6.1),
+    taRifx (>= 1.0.6.2),
+    stringr (>= 1.4.0),
+    stats (>= 4.0.3),
+    igraph (>= 1.2.6),
+    RSpectra (>= 0.16.0),
+    plyr (>= 1.8.6),
+    reshape2 (>= 1.4.4),
+    Matrix (>= 1.3.2),
+    parallel (>= 4.0.3)
