@@ -72,7 +72,7 @@ get.gene.expr <- function(exp.tbl,genes,cell.type=NULL){
 bool.data <- function(exp.tbl,expr.thrs=0){
   bool.tbl <- base::matrix(data = base::as.numeric(exp.tbl > expr.thrs),nrow = base::nrow(exp.tbl),ncol = base::ncol(exp.tbl))
   base::colnames(bool.tbl) <- base::colnames(exp.tbl)
-  base::row.names(bool.tbl) <- base::row.names(exp.tbl)
+  base::rownames(bool.tbl) <- base::rownames(exp.tbl)
   bool.tbl <- bool.tbl[base::which(base::rowSums(bool.tbl) > 0),,drop=FALSE]
   return(bool.tbl)
 }
@@ -85,11 +85,11 @@ bool.data <- function(exp.tbl,expr.thrs=0){
 #' @return List containing all TFs and data frame including only TFs expressed in the required fraction of cells
 #' @export
 get.cons.tfs <- function(exp.tbl,quantile = 0.95){
-  tf.tbl <- exp.tbl[base::which(base::row.names(exp.tbl) %in% tfs),]
+  tf.tbl <- exp.tbl[base::which(base::rownames(exp.tbl) %in% .pck_env$tfs),]
   tf.bool <- bool.data(exp.tbl = tf.tbl)
   freq_df <- base::apply(tf.bool,1,sum)
   freq_df <- base::data.frame(Gene = base::names(freq_df), Freq = freq_df,stringsAsFactors = FALSE)
-  cutoff <- base::unname(stats::quantile(freq_df$Freq[freq_df$Freq > 0],0.95))
+  cutoff <- base::unname(stats::quantile(freq_df$Freq[freq_df$Freq > 0],quantile))
   return(base::list(tf.max.mat.cell = base::colnames(exp.tbl), tf.count = freq_df[freq_df$Freq >= cutoff,]))
 }
 
@@ -160,12 +160,12 @@ SigHotSpotter_pipeline <- function(species, idata, cutoff, DE_Genes, percentile,
   Steady_state_true <- Steady_state_true$SD
   
   ## Retrieves high probability intermediates
-  int=high_probability_intermediates(x = Steady_state_true, intermediates = intermediates,percentile =  percentile)
-  gintg=integrate_sig_TF(g = subg,x = Steady_state_true,deg = DE_Genes, non_interface_TFs = non_interface_TFs,TF_TF_interactions = TF_TF_interactions )
+  int=high_probability_intermediates(x = Steady_state_true, intermediates = .pck_env$intermediates,percentile =  percentile)
+  gintg=integrate_sig_TF(g = subg,x = Steady_state_true,deg = DE_Genes, non_interface_TFs = .pck_env$non_interface_TFs,TF_TF_interactions = .pck_env$TF_TF_interactions )
   
   # nTF=nonterminal_DE_TFs(g = gintg,deg = DE_Genes,non_interface_TFs = non_interface_TFs)
   
-  target.TFs <- dplyr::inner_join(x = DE_Genes, y = TF_TF_interactions, by = c("Gene" = "Source"))
+  target.TFs <- dplyr::inner_join(x = DE_Genes, y = .pck_env$TF_TF_interactions, by = c("Gene" = "Source"))
   target.TFs <- target.TFs[base::which(target.TFs$Target %in% igraph::V(gintg)$name),]
   if(base::nrow(target.TFs) == 0){
     return(NULL)
@@ -208,10 +208,10 @@ SigHotSpotter_pipeline <- function(species, idata, cutoff, DE_Genes, percentile,
     gintg.p=prun.int.g(gintg)
     
     #building networks for all intermediates for active signaling hotspots
-    sp_int_A <- base::lapply(toiintA,to_sp_net_int,gintg.p,nTF,DE_Genes,non_interface_TFs)
+    sp_int_A <- base::lapply(toiintA,to_sp_net_int,gintg.p,nTF,DE_Genes,.pck_env$non_interface_TFs)
     
     #building networks for inactive signaling hotspots
-    sp_int_I <- base::lapply(toiintI,to_sp_net_int,gintg.p,nTF,DE_Genes,non_interface_TFs)
+    sp_int_I <- base::lapply(toiintI,to_sp_net_int,gintg.p,nTF,DE_Genes,.pck_env$non_interface_TFs)
     
     #retrieve receptors for active intermediates & inactive:
     u.gr <- base::Reduce(igraph::graph.union,sp_int_A)
@@ -219,7 +219,7 @@ SigHotSpotter_pipeline <- function(species, idata, cutoff, DE_Genes, percentile,
       aa <- igraph::incident(u.gr,"NICHE",mode="out")
       bb <- igraph::ends(u.gr,aa)
       active_receptors <- bb[,2]
-      active_receptors <- dplyr::intersect(x = active_receptors,y = LR$Receptor)
+      active_receptors <- dplyr::intersect(x = active_receptors,y = .pck_env$LR$Receptor)
     }else{
       active_receptors <- NULL
     }
@@ -229,7 +229,7 @@ SigHotSpotter_pipeline <- function(species, idata, cutoff, DE_Genes, percentile,
       aa <- igraph::incident(u.gr,"NICHE",mode="out")
       bb <- igraph::ends(u.gr,aa)
       inactive_receptors <- bb[,2]
-      inactive_receptors <- dplyr::intersect(x = inactive_receptors, y = LR$Receptor)
+      inactive_receptors <- dplyr::intersect(x = inactive_receptors, y = .pck_env$LR$Receptor)
     }else{
       inactive_receptors <- NULL
     }
@@ -253,7 +253,7 @@ SigHotSpotter_pipeline <- function(species, idata, cutoff, DE_Genes, percentile,
     
     base::cat("   Calculating shortest path weights .\n")
     
-    path.sums <- path.prob.sum(subg = subg,iTF = base::unique(iTF.target.info$Gene), Receptors = Receptors,prob.matrix = prob.matrix,ncores = ncores)
+    path.sums <- path.prob.sum(subg = subg,iTF = base::unique(iTF.target.info$Gene), Receptors = .pck_env$Receptors,prob.matrix = prob.matrix,ncores = ncores)
     
     OUTPUT <- base::list("active"= active_receptors, "inactive"= inactive_receptors,"iTF.targets" = iTF.target.info,"final.score" = base::as.data.frame(final_score,stringsAsFactors = F),"path.sums" = path.sums, "rec.hotspot" = dists, "rec.hotspot.weighted" = dists_weighted)
     return(OUTPUT)
@@ -274,15 +274,15 @@ Data_preprocessing <- function(input_data,cutoff,species = NULL){
   ##COMVERT CELLS WITH LESS THAT 1 FPKM TO 0
   b[b < 1] <- 0
   ##Add a new gene Dummy with expression value 1, Only works if Dummy is present in the initial network
-  b[base::nrow(b)+1, ] <- base::c(dummy.var, base::rep(1,(base::ncol(b)-1)))
+  b[base::nrow(b)+1, ] <- base::c(.pck_env$dummy.var, base::rep(1,(base::ncol(b)-1)))
   #This is to convert chr into numericversion
   b[2:base::ncol(b)]<-base::as.data.frame(base::lapply(b[2:base::ncol(b)],as.numeric,b[2:base::ncol(b)]))
   ##Renaming the first column for finding the union
   base::colnames(b)[1] <- "Source"
-  a=Background_signaling_interactome
+  a=.pck_env$Background_signaling_interactome
   
   ## Removing vertices connected to Dummy which are not receptors
-  non.recs <- base::which(a$Source == dummy.var & !(a$Target %in% Receptors))
+  non.recs <- base::which(a$Source == .pck_env$dummy.var & !(a$Target %in% .pck_env$Receptors))
   recs <- dplyr::setdiff(base::c(1:base::nrow(a)),non.recs)
   a <- a[recs,]
   
@@ -316,23 +316,23 @@ Data_preprocessing <- function(input_data,cutoff,species = NULL){
   #To ensure reachability for the Markov chain
   igraph::V(g)$degree=igraph::degree(g, v=igraph::V(g), mode = c("in"))
   #Select Nodes to be deleted
-  del=igraph::V(g)[degree==0]
+  del=igraph::V(g)[igraph::V(g)$degree==0]
   #delete vertices from graph
   while(base::length(del)!=0)
   {
     g <- igraph::delete.vertices(g,del)
     igraph::V(g)$degree=igraph::degree(g, v=igraph::V(g), mode = c("in"))
-    del=igraph::V(g)[degree==0]
+    del=igraph::V(g)[igraph::V(g)$degree==0]
   }
   #Same as above but remove nodes with with zero out degree
   igraph::V(g)$degree=igraph::degree(g, v=igraph::V(g), mode = c("out"))
   #Select Nodes to be deleted
-  del=igraph::V(g)[degree==0]
+  del=igraph::V(g)[igraph::V(g)$degree==0]
   while(base::length(del)!=0)
   {
     g <- igraph::delete.vertices(g,del)
     igraph::V(g)$degree=igraph::degree(g, v=igraph::V(g), mode = c("out"))
-    del=igraph::V(g)[degree==0]
+    del=igraph::V(g)[igraph::V(g)$degree==0]
   }
   #####TO EXTRACT THE LARGEST STRONGLY CONNECTED COMPONENT
   members <- igraph::membership(igraph::clusters(g, mode="strong"))
@@ -446,13 +446,13 @@ integrate_sig_TF <- function(g,x,deg, non_interface_TFs, TF_TF_interactions ){
   #deleting TF nodes with no indegree
   igraph::V(g3)$degree=igraph::degree(g3, v=igraph::V(g3), mode = base::c("in"))
   #Select Nodes to be deleted
-  del=igraph::V(g3)[degree==0]
+  del=igraph::V(g3)[igraph::V(g3)$degree==0]
   #delete vertices from graph
   while(base::length(del)!=0)
   {
     g3 <- igraph::delete.vertices(g3,del)
     igraph::V(g3)$degree=igraph::degree(g3, v=igraph::V(g3), mode = base::c("in"))
-    del=igraph::V(g3)[degree==0]
+    del=igraph::V(g3)[igraph::V(g3)$degree==0]
   }
   return(g3)
 }
@@ -629,8 +629,10 @@ path.prob.sum <- function(subg,iTF,Receptors,prob.matrix,ncores=4){
 scoringFun <- function(data,tissue.R.TF,tissue.LR,LR,sig.cutoff = 0.9,z.score.cutoff = 0){
   pops <- dplyr::union(tissue.LR$Lig.pop,tissue.LR$Rec.pop)
   out.tissue.lr.scored <- base::list()
-  for(lig.pop in pops){
-    for(rec.pop in pops){
+  for(rec.pop in pops){
+    totalscores <- base::c()
+    lr <- base::list()
+    for(lig.pop in pops){
       base::print(base::paste0(lig.pop,"_",rec.pop))
       lrsub <- tissue.LR[tissue.LR$Lig.pop == lig.pop & tissue.LR$Rec.pop == rec.pop,]
       if(base::nrow(lrsub) == 0){
@@ -641,6 +643,7 @@ scoringFun <- function(data,tissue.R.TF,tissue.LR,LR,sig.cutoff = 0.9,z.score.cu
       lig_means <- base::apply(dat_lig,1,function(x){base::mean(x[x>0])})
       rec_means <- base::apply(dat_rec,1,function(x){base::mean(x[x>0])})
       lrsub$score <- base::apply(lrsub,1,function(x){base::as.numeric(lig_means[x[2]])*base::as.numeric(rec_means[x[4]])})
+      lr <- base::append(lr,base::list(lrsub))
       
       test_lig <- data[LR$Ligand,base::which(base::colnames(data) == lig.pop)]
       test_lig_means <- base::apply(test_lig,1,function(x){base::mean(base::as.numeric(x[x>0]))})
@@ -648,16 +651,18 @@ scoringFun <- function(data,tissue.R.TF,tissue.LR,LR,sig.cutoff = 0.9,z.score.cu
       test_rec_means <- base::apply(test_rec,1,function(x){base::mean(base::as.numeric(x[x>0]))})
       scores <- base::unname(test_lig_means)*base::unname(test_rec_means)
       scores[base::is.na(scores)] <- 0
-      e <- stats::ecdf(scores)
-      lrsub$significance <- e(lrsub$score)
-      out.tissue.lr.scored[[base::paste0(lig.pop,"_",rec.pop)]] <- lrsub
+      totalscores <- base::c(totalscores,scores)
     }
+    e <- stats::ecdf(totalscores)
+    lr1 <- base::do.call(base::rbind,lr)
+    lr1$significance <- e(lr1$score)
+    out.tissue.lr.scored[[base::paste0(rec.pop)]] <- lr1
   }
   out.tissue.lr.scored.joined <- base::do.call(base::rbind,out.tissue.lr.scored)
   
   m <- tissue.R.TF[tissue.R.TF$z.score >= z.score.cutoff,base::c(1,2)]
   m <- m[!base::duplicated(m),]
-  mm <- base::merge(out.tissue.lr.scored.joined,m,by.x = c("Rec.pop","Receptor"), by.y = c("Celltype","Receptor"))
+  mm <- base::merge(out.tissue.lr.scored.joined,m,by.x = base::c("Rec.pop","Receptor"), by.y = base::c("Celltype","Receptor"))
   mm <- mm[mm$significance >= sig.cutoff,]
   mm <- mm[,base::c(3,4,5,2,1,6,7,8)]
   

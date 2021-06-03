@@ -28,9 +28,9 @@ edge_shortest <- function(path, graph)
 prun.int.g <- function(g){
   igraph::E(g)$weight=1-(base::abs(igraph::E(g)$weight))
   #function to delete edges from tf to dummy in the network
-  del=igraph::incident(g, dummy.var, mode = base::c("in"))
+  del=igraph::incident(g, .pck_env$dummy.var, mode = base::c("in"))
   g <- igraph::delete.edges(g,del)
-  g <- igraph::set.vertex.attribute(g,"name",dummy.var,"NICHE")
+  g <- igraph::set.vertex.attribute(g,"name",.pck_env$dummy.var,"NICHE")
   return(g)
 }
 

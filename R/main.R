@@ -1,82 +1,4 @@
-#' Background signaling interactome
-#'
-#' @name Background_signaling_interactome
-#' @docType data
-#' @author Sascha Jung \email{sjung@@cicbiogune.es}
-#' @keywords data
-NULL
-
-#' Ligand receptor interactions
-#'
-#' @name LR
-#' @docType data
-#' @author Sascha Jung \email{sjung@@cicbiogune.es}
-#' @keywords data
-NULL
-
-#' Ligands
-#'
-#' @name Ligands
-#' @docType data
-#' @author Sascha Jung \email{sjung@@cicbiogune.es}
-#' @keywords data
-NULL
-
-#' Receptors
-#'
-#' @name Receptors
-#' @docType data
-#' @author Sascha Jung \email{sjung@@cicbiogune.es}
-#' @keywords data
-NULL
-
-#' TF-TF interactions
-#'
-#' @name TF_TF_interactions
-#' @docType data
-#' @author Sascha Jung \email{sjung@@cicbiogune.es}
-#' @keywords data
-NULL
-
-#' Dummy variable
-#'
-#' @name dummy.var
-#' @docType data
-#' @author Sascha Jung \email{sjung@@cicbiogune.es}
-#' @keywords data
-NULL
-
-#' Intermediate signaling molecules
-#'
-#' @name intermediates
-#' @docType data
-#' @author Sascha Jung \email{sjung@@cicbiogune.es}
-#' @keywords data
-NULL
-
-#' Non-interface TFs
-#'
-#' @name non_interface_TFs
-#' @docType data
-#' @author Sascha Jung \email{sjung@@cicbiogune.es}
-#' @keywords data
-NULL
-
-#' TF database
-#'
-#' @name tf.db
-#' @docType data
-#' @author Sascha Jung \email{sjung@@cicbiogune.es}
-#' @keywords data
-NULL
-
-#' TFs
-#'
-#' @name tfs
-#' @docType data
-#' @author Sascha Jung \email{sjung@@cicbiogune.es}
-#' @keywords data
-NULL
+.pck_env <- new.env(parent=emptyenv())
 
 #' Reconstructs functional cell-cell communication networks
 #' 
@@ -101,32 +23,8 @@ NULL
 #' @export
 InterCom <- function(data,anno.tbl,species,sighot.cutoff=0.1,sighot.percentile=70,consv.thrs=0.05,ncores=4,sig.cutoff=0.9,z.score.cutoff=2,tissue.name,temp.folder.name = "temp",out.path){
   
-  #source("intercom_library_coexp.R")
-  #source("for_plotting_network_functions.R")
-  
-  # suppressPackageStartupMessages({
-  #   require(textshape)
-  #   require(ggplot2)
-  #   require(stutils)
-  #   require(dplyr)
-  #   require(doParallel)
-  #   require(stringr)
-  #   require(plyr)
-  #   require(igraph)
-  #   require(Matrix)
-  #   require(reshape2)
-  #   require(RSpectra)
-  #   require(snow)
-  #   require(taRifx)
-  #   require(stats)
-  #   require(gtools)
-  #   require(data.table)
-  #   require(rlist)
-  # })
-  
   system(base::paste0("mkdir ",out.path))
   system(base::paste0("mkdir ",out.path,"/",temp.folder.name))
-  
   
   base::cat("Creating input parameters file\n\n")
   
@@ -148,46 +46,64 @@ InterCom <- function(data,anno.tbl,species,sighot.cutoff=0.1,sighot.percentile=7
   celltype.freq <- base::as.data.frame(base::table(anno.tbl$cell.type))
   rm.celltype <- base::as.character(celltype.freq[base::which(celltype.freq$Freq <= 10),][,1])
   
-  
-  new.colnames <- base::sapply(base::colnames(data),function(x) {
-    base::make.names(base::as.character(anno.tbl[["cell.type"]][x == base::as.character(anno.tbl[["cell.name"]])]),
-               unique=FALSE)
-  })
+  new.colnames <- base::unname(base::sapply(base::colnames(data),function(x) {
+    base::make.names(base::as.character(anno.tbl[["cell.type"]][x == base::as.character(anno.tbl[["cell.name"]])]),unique=FALSE)
+  }))
   base::colnames(data) <- new.colnames
-  
-  # Dynamic loading of maxsub function shared object required for running the get.max.cluster function.
 
+  tmp_env <- new.env(parent = emptyenv())
   if(species == "MOUSE"){
     utils::data("MOUSE_Background_signaling_interactome","MOUSE_dummy.var","MOUSE_intermediates",
          "MOUSE_Ligands","MOUSE_LR","MOUSE_non_interface_TFs","MOUSE_Receptors","MOUSE_TF_TF_interactions",
-         "MOUSE_tf.db","MOUSE_tfs",package = "InterCom")
+         "MOUSE_tf.db","MOUSE_tfs",package = "InterCom", envir = tmp_env)
+    .pck_env$Background_signaling_interactome <- tmp_env$MOUSE_Background_signaling_interactome
+    .pck_env$dummy.var <- tmp_env$MOUSE_dummy.var
+    .pck_env$intermediates <- tmp_env$MOUSE_intermediates
+    .pck_env$Ligands <- tmp_env$MOUSE_Ligands
+    .pck_env$LR <- tmp_env$MOUSE_LR
+    .pck_env$non_interface_TFs <- tmp_env$MOUSE_non_interface_TFs
+    .pck_env$Receptors <- tmp_env$MOUSE_Receptors
+    .pck_env$TF_TF_interactions <- tmp_env$MOUSE_TF_TF_interactions
+    .pck_env$tf.db <- tmp_env$MOUSE_tf.db
+    .pck_env$tfs <- tmp_env$MOUSE_tfs
   } else {
     if(species == "HUMAN"){
       utils::data("HUMAN_Background_signaling_interactome","HUMAN_dummy.var","HUMAN_intermediates",
            "HUMAN_Ligands","HUMAN_LR","HUMAN_non_interface_TFs","HUMAN_Receptors","HUMAN_TF_TF_interactions",
-           "HUMAN_tf.db","HUMAN_tfs",package = "InterCom")
+           "HUMAN_tf.db","HUMAN_tfs",package = "InterCom", envir = tmp_env)
+      .pck_env$Background_signaling_interactome <- tmp_env$HUMAN_Background_signaling_interactome
+      .pck_env$dummy.var <- tmp_env$HUMAN_dummy.var
+      .pck_env$intermediates <- tmp_env$HUMAN_intermediates
+      .pck_env$Ligands <- tmp_env$HUMAN_Ligands
+      .pck_env$LR <- tmp_env$HUMAN_LR
+      .pck_env$non_interface_TFs <- tmp_env$HUMAN_non_interface_TFs
+      .pck_env$Receptors <- tmp_env$HUMAN_Receptors
+      .pck_env$TF_TF_interactions <- tmp_env$HUMAN_TF_TF_interactions
+      .pck_env$tf.db <- tmp_env$HUMAN_tf.db
+      .pck_env$tfs <- tmp_env$HUMAN_tfs
     } else {
       base::stop("Only the following species are supported: 'MOUSE', 'HUMAN'")
     }
   }
-  utils::globalVariables(c("Background_signaling_interactome", "LR", "Ligands", "Receptors",
-                            "TF_TF_interactions", "dummy.var", "intermediates",
-                             "non_interface_TFs"))
+  rm(tmp_env)
+
+  base::rownames(.pck_env$Background_signaling_interactome) <- 1:base::nrow(.pck_env$Background_signaling_interactome)
+  non.rec.id <- base::which(.pck_env$Background_signaling_interactome$Source == .pck_env$dummy.var & !(.pck_env$Background_signaling_interactome$Target %in% .pck_env$Receptors))
+  keep.id <- base::setdiff(base::row.names(.pck_env$Background_signaling_interactome),non.rec.id)
+  .pck_env$Background_signaling_interactome <- .pck_env$Background_signaling_interactome[keep.id,]
   
-  base::row.names(Background_signaling_interactome) <- 1:base::nrow(Background_signaling_interactome)
-  non.rec.id <- base::which(Background_signaling_interactome$Source == dummy.var & !(Background_signaling_interactome$Target %in% Receptors))
-  keep.id <- base::setdiff(base::row.names(Background_signaling_interactome),non.rec.id)
-  Background_signaling_interactome <- Background_signaling_interactome[keep.id,]
-  
-  TF_TF_interactions <- taRifx::remove.factors(TF_TF_interactions)
+  .pck_env$TF_TF_interactions <- taRifx::remove.factors(.pck_env$TF_TF_interactions)
   
   all.pops <- base::setdiff(base::unique(anno.tbl$cell.type),rm.celltype)
   anno.tbl <- anno.tbl[base::which(anno.tbl$cell.type %in% all.pops),]
   
-  data.lig.exp <- get.gene.expr(exp.tbl = data,genes = base::intersect(Ligands,base::row.names(data)),cell.type = all.pops)
+  base::cat("Detected populations:\n")
+  base::cat(all.pops)
+  
+  data.lig.exp <- get.gene.expr(exp.tbl = data,genes = base::intersect(.pck_env$Ligands,base::rownames(data)),cell.type = all.pops)
   base::colnames(data.lig.exp) <- base::paste0("Ligand.",base::colnames(data.lig.exp))
   
-  L.frame <- dplyr::inner_join(x = data.lig.exp,y = LR[,-1], by = base::c("Ligand.gene" = "Ligand"))
+  L.frame <- dplyr::inner_join(x = data.lig.exp,y = .pck_env$LR[,-1], by = base::c("Ligand.gene" = "Ligand"))
   L.frame <- L.frame[base::which(L.frame$Ligand.exp.perc > consv.thrs),]
   
   base::save(list = base::c("data","anno.tbl","data.lig.exp","L.frame"),file = base::paste0(out.path,"/",temp.folder.name,"/temp_data.RData"))
@@ -206,6 +122,10 @@ InterCom <- function(data,anno.tbl,species,sighot.cutoff=0.1,sighot.percentile=7
   
   base::invisible(base::gc())
   
+  max.cluster.info <- NULL
+  sig.input <- NULL
+  hotspot.out <- NULL
+  
   base::lapply(X = all.pops,FUN = function(celltype){
     
     if(base::length(base::list.files(path = base::paste0(out.path,"/",temp.folder.name),pattern = base::paste0(celltype,"_results.RData"))) == 0){
@@ -221,7 +141,6 @@ InterCom <- function(data,anno.tbl,species,sighot.cutoff=0.1,sighot.percentile=7
         
         sig.input <- cell.exp.tbl[,max.cluster.info$tf.max.mat.cell]
         sig.input <- base::cbind.data.frame(base::row.names(sig.input),sig.input,stringsAsFactors = F)
-        
         cons.tfs <- base::as.data.frame(base::unique(max.cluster.info$tf.count$Gene),stringsAsFactors = F)
         
         base::colnames(cons.tfs)[1] <- "Gene"
@@ -348,28 +267,21 @@ InterCom <- function(data,anno.tbl,species,sighot.cutoff=0.1,sighot.percentile=7
   
   base::cat(" Find significant LR interactions\n")
 
-  base::load(base::paste0(out.path,"/",temp.folder.name,"/temp_data.RData"))
+  tmp_env <- new.env(parent=emptyenv())
+  base::load(base::paste0(out.path,"/",temp.folder.name,"/temp_data.RData"), envir = tmp_env)
   
-  
-  scored.LR <- scoringFun(data = data,tissue.R.TF = tissue.R.TF,tissue.LR = tissue.LR,LR = LR,sig.cutoff = sig.cutoff,z.score.cutoff = z.score.cutoff)
+  scored.LR <- scoringFun(data = tmp_env$data,tissue.R.TF = collate$tissue.R.TF,tissue.LR = collate$tissue.LR,LR = .pck_env$LR,sig.cutoff = sig.cutoff,z.score.cutoff = z.score.cutoff)
 
-  collate$scored.LR <- scored.LR
+  rm(tmp_env)
   
-  if(base::all(base::c("Lig.pop","Ligand","Receptor","Rec.pop") %in% base::colnames(tissue.LR))){
-    
-    final <- dplyr::inner_join(x = tissue.LR,y = scored.LR,by = base::c("Lig.pop","Ligand","Receptor","Rec.pop"))
-    
-    base::saveRDS(object = final,file = base::paste0(out.path,"/tissue_LR_scored.Rds"))
-    
-    utils::write.table(x = final,file = base::paste0(out.path,"/tissue_LR_scored.txt"), sep = "\t", row.names = F, quote = F)
-    
-    collate$final <- final
-    
-    output <- collate
-    
-    base::save(list = base::c("output"),file = base::paste0(out.path,"/output_",tissue.name,".RData"))
-    
-  } else{
-    collate$final <- base::c()
-  }
+  collate$final <- scored.LR
+  
+  base::saveRDS(object = collate$final,file = base::paste0(out.path,"/tissue_LR_scored.Rds"))
+  
+  utils::write.table(x = collate$final,file = base::paste0(out.path,"/tissue_LR_scored.txt"), sep = "\t", row.names = F, quote = F)
+  
+  output <- collate
+  
+  base::save(list = base::c("output"),file = base::paste0(out.path,"/output_",tissue.name,".RData"))
+  
 }

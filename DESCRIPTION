@@ -7,11 +7,11 @@ Authors@R:
            role = c("aut", "cre"),
            email = "sjung@cicbiogune.es")
 Description: Reconstruction of Functional Cell-Cell Communication Networks.
-License: CC-BY
+License: CC BY 4.0
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.1.9001
 Imports: 
     utils (>= 4.0.3),
     base (>= 4.0.3),
@@ -26,3 +26,5 @@ Imports:
     reshape2 (>= 1.4.4),
     Matrix (>= 1.3.2),
     parallel (>= 4.0.3)
+Depends: 
+    R (>= 3.50)
