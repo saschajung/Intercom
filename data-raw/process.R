@@ -45,6 +45,8 @@ usethis::use_data(HUMAN_Background_signaling_interactome, HUMAN_dummy.var, HUMAN
 # Get mouse orthologs of human genes in Background signaling interactome
 backSig_Source <- homologene(HUMAN_Background_signaling_interactome$Source,inTax = 9606, outTax = 10090)
 backSig_Target <- homologene(HUMAN_Background_signaling_interactome$Target,inTax = 9606, outTax = 10090)
+backSig_Source <- rbind(backSig_Source,c("DUMMY","Dummy",-1,-1))
+backSig_Target <- rbind(backSig_Target,c("DUMMY","Dummy",-1,-1))
 
 tmp <- HUMAN_Background_signaling_interactome
 tmp <- tmp[tmp$Source %in% backSig_Source$`9606` & tmp$Target %in% backSig_Target$`9606`,]

@@ -14,6 +14,7 @@ InterCom(
   ncores = 4,
   sig.cutoff = 0.9,
   z.score.cutoff = 2,
+  min.cells = 10,
   tissue.name,
   temp.folder.name = "temp",
   out.path
@@ -41,6 +42,8 @@ the first and cluster/cell type information in the second column.}
 
 \item{z.score.cutoff}{Cutoff parameter to determine significant associations between receptors and interface TFs.
 Default: 2.}
+
+\item{min.cells}{The minimum number of cells/samples per cell type. Default: 10}
 
 \item{tissue.name}{A name of the dataset}
 

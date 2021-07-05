@@ -16,12 +16,13 @@
 #' @param sig.cutoff Significance cutoff between 0 (weakest) and 1 (strictest). Default: 0.9
 #' @param z.score.cutoff Cutoff parameter to determine significant associations between receptors and interface TFs.
 #' Default: 2.
+#' @param min.cells The minimum number of cells/samples per cell type. Default: 10
 #' @param tissue.name A name of the dataset
 #' @param out.path Path to a folder where the output should be stored.
 #' @param temp.folder.name Name of the temporary folder to be created within the output path. Default: "temp"
 #' @return List object containing the final interactome and auxiliary information
 #' @export
-InterCom <- function(data,anno.tbl,species,sighot.cutoff=0.1,sighot.percentile=70,consv.thrs=0.05,ncores=4,sig.cutoff=0.9,z.score.cutoff=2,tissue.name,temp.folder.name = "temp",out.path){
+InterCom <- function(data,anno.tbl,species,sighot.cutoff=0.1,sighot.percentile=70,consv.thrs=0.05,ncores=4,sig.cutoff=0.9,z.score.cutoff=2,min.cells = 10,tissue.name,temp.folder.name = "temp",out.path){
   
   system(base::paste0("mkdir ",out.path))
   system(base::paste0("mkdir ",out.path,"/",temp.folder.name))
@@ -44,7 +45,7 @@ InterCom <- function(data,anno.tbl,species,sighot.cutoff=0.1,sighot.percentile=7
   base::colnames(anno.tbl) <- base::c("cell.name","cell.type")
   
   celltype.freq <- base::as.data.frame(base::table(anno.tbl$cell.type))
-  rm.celltype <- base::as.character(celltype.freq[base::which(celltype.freq$Freq <= 10),][,1])
+  rm.celltype <- base::as.character(celltype.freq[base::which(celltype.freq$Freq <= min.cells),][,1])
   
   new.colnames <- base::unname(base::sapply(base::colnames(data),function(x) {
     base::make.names(base::as.character(anno.tbl[["cell.type"]][x == base::as.character(anno.tbl[["cell.name"]])]),unique=FALSE)
@@ -56,6 +57,8 @@ InterCom <- function(data,anno.tbl,species,sighot.cutoff=0.1,sighot.percentile=7
     utils::data("MOUSE_Background_signaling_interactome","MOUSE_dummy.var","MOUSE_intermediates",
          "MOUSE_Ligands","MOUSE_LR","MOUSE_non_interface_TFs","MOUSE_Receptors","MOUSE_TF_TF_interactions",
          "MOUSE_tf.db","MOUSE_tfs",package = "InterCom", envir = tmp_env)
+    tmp_env$MOUSE_Background_signaling_interactome[,1] <- as.character(tmp_env$MOUSE_Background_signaling_interactome[,1])
+    tmp_env$MOUSE_Background_signaling_interactome[,2] <- as.character(tmp_env$MOUSE_Background_signaling_interactome[,2])
     .pck_env$Background_signaling_interactome <- tmp_env$MOUSE_Background_signaling_interactome
     .pck_env$dummy.var <- tmp_env$MOUSE_dummy.var
     .pck_env$intermediates <- tmp_env$MOUSE_intermediates
@@ -71,6 +74,8 @@ InterCom <- function(data,anno.tbl,species,sighot.cutoff=0.1,sighot.percentile=7
       utils::data("HUMAN_Background_signaling_interactome","HUMAN_dummy.var","HUMAN_intermediates",
            "HUMAN_Ligands","HUMAN_LR","HUMAN_non_interface_TFs","HUMAN_Receptors","HUMAN_TF_TF_interactions",
            "HUMAN_tf.db","HUMAN_tfs",package = "InterCom", envir = tmp_env)
+      tmp_env$HUMAN_Background_signaling_interactome[,1] <- as.character(tmp_env$HUMAN_Background_signaling_interactome[,1])
+      tmp_env$HUMAN_Background_signaling_interactome[,2] <- as.character(tmp_env$HUMAN_Background_signaling_interactome[,2])
       .pck_env$Background_signaling_interactome <- tmp_env$HUMAN_Background_signaling_interactome
       .pck_env$dummy.var <- tmp_env$HUMAN_dummy.var
       .pck_env$intermediates <- tmp_env$HUMAN_intermediates

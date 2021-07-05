@@ -38,7 +38,6 @@ get.gene.expr <- function(exp.tbl,genes,cell.type=NULL){
     
     out <- base::do.call(base::rbind,base::lapply(X = all.pops,FUN = function(celltype1){
       cell.gene.exp <- gene.exp.tbl[,base::which(base::grepl(x = base::colnames(gene.exp.tbl),pattern = base::paste0("^",celltype1,"[\\.0-9]*$"),ignore.case = F))]
-      
       cell.gene.abs.exp <- base::rowSums(cell.gene.exp) 
       cell.gene.abs.exp <- base::cbind.data.frame(base::row.names(cell.gene.exp),cell.gene.abs.exp,stringsAsFactors = F)
       base::colnames(cell.gene.abs.exp) <- c("gene","abs.expr")
@@ -302,7 +301,7 @@ Data_preprocessing <- function(input_data,cutoff,species = NULL){
   ########Sum of elementwise product
   sum_product_expression=base::rowSums(g, na.rm = FALSE, dims = 1)
   g3=base::cbind(a,sum_product_expression)
-  ########Calculation of precentage of cells expressed
+  ########Calculation of percentage of cells expressed
   h=base::rowSums(g != 0)
   percent_expressed=(h*100)/base::ncol(ab)
   g3=base::cbind(g3,percent_expressed)
