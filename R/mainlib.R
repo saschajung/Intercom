@@ -644,9 +644,10 @@ scoringFun <- function(data,tissue.R.TF,tissue.LR,LR,sig.cutoff = 0.9,z.score.cu
       lrsub$score <- base::apply(lrsub,1,function(x){base::as.numeric(lig_means[x[2]])*base::as.numeric(rec_means[x[4]])})
       lr <- base::append(lr,base::list(lrsub))
       
-      test_lig <- data[LR$Ligand,base::which(base::colnames(data) == lig.pop)]
+      intsToConsider <- base::which(LR$Ligand %in% rownames(data) & LR$Receptor %in% rownames(data))
+      test_lig <- data[LR$Ligand[intsToConsider],base::which(base::colnames(data) == lig.pop),drop = F]
       test_lig_means <- base::apply(test_lig,1,function(x){base::mean(base::as.numeric(x[x>0]))})
-      test_rec <- data[LR$Receptor,base::which(base::colnames(data) == rec.pop)]
+      test_rec <- data[LR$Receptor[intsToConsider],base::which(base::colnames(data) == rec.pop),drop = F]
       test_rec_means <- base::apply(test_rec,1,function(x){base::mean(base::as.numeric(x[x>0]))})
       scores <- base::unname(test_lig_means)*base::unname(test_rec_means)
       scores[base::is.na(scores)] <- 0
